@@ -3,7 +3,6 @@
     public enum BackupType
     {
         Full,
-        Incremental,
         Differential
     }
 }

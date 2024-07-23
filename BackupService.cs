@@ -1,93 +1,95 @@
 ﻿using Microsoft.Extensions.Configuration;
-using MongoDbBackupService;
 using NLog;
+using System;
 using System.Diagnostics;
+using System.IO;
 
-public class BackupService : IBackupService
+namespace MongoDbBackupService
 {
-    private static readonly ILogger logger = LogManager.GetCurrentClassLogger();
-    private readonly IConfiguration configuration;
-    private readonly string mongoDumpPath;
-    private readonly string mongoDbAddress;
-    private readonly string mongoDbUsername;
-    private readonly string mongoDbPassword;
-    private readonly string backupDir;
-    private readonly string fullBackupScript;
-    private readonly string incrementalBackupScript;
-    private readonly string differentialBackupScript;
-    private readonly string databaseName;
 
-    public BackupService(IConfiguration configuration)
+    public class BackupService : IBackupService
     {
-        this.configuration = configuration;
-        mongoDumpPath = configuration["MongoDumpPath"];
-        mongoDbAddress = configuration["MongoDb:Address"];
-        mongoDbUsername = configuration["MongoDb:Username"];
-        mongoDbPassword = configuration["MongoDb:Password"];
-        backupDir = configuration["BackupDirectory"];
-        fullBackupScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupScripts", "FullBackup.cmd");
-        incrementalBackupScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupScripts", "IncrementalBackup.cmd");
-        differentialBackupScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupScripts", "DifferentialBackup.cmd");
-        databaseName = configuration["MongoDb:DatabaseName"];
-    }
+        private static readonly ILogger logger = LogManager.GetCurrentClassLogger();
+        private readonly IConfiguration configuration;
+        private readonly string mongoDumpPath;
+        private readonly string mongoDbAddress;
+        private readonly string mongoDbUsername;
+        private readonly string mongoDbPassword;
+        private readonly string backupDir;
+        private readonly string fullBackupScript;
+        private readonly string differentialBackupScript;
+        private readonly string databaseName;
 
-    public void PerformBackup(BackupType backupType)
-    {
-        try
+        public BackupService(IConfiguration configuration)
         {
-            // Prepare directories
-            string backupTypeDir = Path.Combine(backupDir, backupType.ToString().ToLower());
-            string logDir = Path.Combine(backupTypeDir, "log");
-            Directory.CreateDirectory(backupTypeDir);
-            Directory.CreateDirectory(logDir);
+            this.configuration = configuration;
+            mongoDumpPath = configuration["MongoDumpPath"];
+            mongoDbAddress = configuration["MongoDb:Address"];
+            mongoDbUsername = configuration["MongoDb:Username"];
+            mongoDbPassword = configuration["MongoDb:Password"];
+            backupDir = configuration["BackupDirectory"];
+            fullBackupScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupScripts", "FullBackup.cmd");
+            differentialBackupScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupScripts", "DifferentialBackup.cmd");
+            databaseName = configuration["MongoDb:DatabaseName"];
+        }
 
-            // Determine the correct script path
-            string scriptPath = backupType switch
+        public void PerformBackup(BackupType backupType)
+        {
+            try
             {
-                BackupType.Full => fullBackupScript,
-                BackupType.Incremental => incrementalBackupScript,
-                BackupType.Differential => differentialBackupScript,
-                _ => throw new ArgumentOutOfRangeException(nameof(backupType), backupType, null)
-            };
+                // Prepare directories
+                string timestamp = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
+                string backupTypeDir = Path.Combine(backupDir, backupType.ToString().ToLower(), timestamp);
+                string logDir = Path.Combine(backupTypeDir, "log");
+                Directory.CreateDirectory(backupTypeDir);
+                Directory.CreateDirectory(logDir);
 
-            string timestamp = DateTime.Now.ToString("dd.MM.yyyy-HH.mm.ss");
-            string authPart = !string.IsNullOrEmpty(mongoDbUsername) && !string.IsNullOrEmpty(mongoDbPassword)
-                ? $"--username \"{mongoDbUsername}\" --password \"{mongoDbPassword}\" "
-                : string.Empty;
-
-            // Construct the arguments to pass to the batch script
-            string arguments = $"\"{mongoDumpPath}\" \"{mongoDbAddress}\" \"{databaseName}\" \"{backupTypeDir}\" \"{timestamp}\" \"{authPart}\"";
-
-            // Configure the process start info to run the batch script directly
-            ProcessStartInfo processStartInfo = new ProcessStartInfo
-            {
-                FileName = scriptPath,
-                Arguments = arguments,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-                UseShellExecute = false,
-                CreateNoWindow = true
-            };
-
-            using (Process process = new Process { StartInfo = processStartInfo })
-            {
-                process.OutputDataReceived += (sender, args) => { if (args.Data != null) logger.Info(args.Data); };
-                process.ErrorDataReceived += (sender, args) => { if (args.Data != null) logger.Error(args.Data); };
-
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
-
-                if (process.ExitCode != 0)
+                // Determine the correct script path
+                string scriptPath = backupType switch
                 {
-                    logger.Error($"Script execution failed with exit code {process.ExitCode}");
+                    BackupType.Full => fullBackupScript,
+                    BackupType.Differential => differentialBackupScript,
+                    _ => throw new ArgumentOutOfRangeException(nameof(backupType), backupType, null)
+                };
+
+                string authPart = !string.IsNullOrEmpty(mongoDbUsername) && !string.IsNullOrEmpty(mongoDbPassword)
+                    ? $"--username \"{mongoDbUsername}\" --password \"{mongoDbPassword}\" "
+                    : string.Empty;
+
+                // Construct the arguments to pass to the batch script
+                string arguments = $"\"{mongoDumpPath}\" \"{mongoDbAddress}\" \"{databaseName}\" \"{backupTypeDir}\" \"{logDir}\" {authPart}";
+
+                // Configure the process start info to run the batch script directly
+                ProcessStartInfo processStartInfo = new ProcessStartInfo
+                {
+                    FileName = scriptPath,
+                    Arguments = arguments,
+                    RedirectStandardOutput = true,
+                    RedirectStandardError = true,
+                    UseShellExecute = false,
+                    CreateNoWindow = true
+                };
+
+                using (Process process = new Process { StartInfo = processStartInfo })
+                {
+                    process.OutputDataReceived += (sender, args) => { if (args.Data != null) logger.Info(args.Data); };
+                    process.ErrorDataReceived += (sender, args) => { if (args.Data != null) logger.Error(args.Data); };
+
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                    process.WaitForExit();
+
+                    if (process.ExitCode != 0)
+                    {
+                        logger.Error($"Script execution failed with exit code {process.ExitCode}");
+                    }
                 }
             }
-        }
-        catch (Exception ex)
-        {
-            logger.Error(ex, $"An error occurred while performing {backupType} backup.");
+            catch (Exception ex)
+            {
+                logger.Error(ex, $"An error occurred while performing {backupType} backup.");
+            }
         }
     }
 }
