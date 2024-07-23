@@ -17,7 +17,7 @@ namespace MongoBackupService
         public void Start()
         {
             // Set up the timer for scheduled backups
-            _timer = new Timer(86400000); // 24 hours in milliseconds
+            _timer = new Timer(5000); // 24 hours in milliseconds
             _timer.Elapsed += OnTimedEvent;
             _timer.AutoReset = true;
             _timer.Enabled = true;
