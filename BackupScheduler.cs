@@ -31,7 +31,6 @@ namespace MongoBackupService
             try
             {
                 _backupService.PerformBackup(BackupType.Full);
-                _backupService.PerformBackup(BackupType.Differential);
             }
             catch (Exception ex)
             {

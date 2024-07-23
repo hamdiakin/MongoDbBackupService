@@ -1,8 +1,6 @@
 ﻿using Microsoft.Extensions.Configuration;
 using NLog;
-using System;
 using System.Diagnostics;
-using System.IO;
 
 namespace MongoDbBackupService
 {
@@ -29,7 +27,6 @@ namespace MongoDbBackupService
             mongoDbPassword = configuration["MongoDb:Password"];
             backupDir = configuration["BackupDirectory"];
             fullBackupScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupScripts", "FullBackup.cmd");
-            differentialBackupScript = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "BackupScripts", "DifferentialBackup.cmd");
             databaseName = configuration["MongoDb:DatabaseName"];
         }
 
@@ -37,6 +34,7 @@ namespace MongoDbBackupService
         {
             try
             {
+                logger.Info("Backup process started");
                 // Prepare directories
                 string timestamp = DateTime.Now.ToString("yyyy-MM-dd-HH-mm-ss");
                 string backupTypeDir = Path.Combine(backupDir, backupType.ToString().ToLower(), timestamp);
@@ -48,7 +46,6 @@ namespace MongoDbBackupService
                 string scriptPath = backupType switch
                 {
                     BackupType.Full => fullBackupScript,
-                    BackupType.Differential => differentialBackupScript,
                     _ => throw new ArgumentOutOfRangeException(nameof(backupType), backupType, null)
                 };
 

@@ -24,9 +24,6 @@
     <None Update="appsettings.json">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-    <None Update="BackupScripts\DifferentialBackup.cmd">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </None>
     <None Update="BackupScripts\FullBackup.cmd">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
