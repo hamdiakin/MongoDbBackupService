@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.10.35013.160
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbBackupService", "MongoDbBackupService.csproj", "{AD560857-66F4-4F96-8AB9-CA580AE69464}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "MongoDbBackupService", "MongoDbBackupService.csproj", "{AD560857-66F4-4F96-8AB9-CA580AE69464}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MongoDbRestoreApplication", "..\MongoDbRestoreApplication\MongoDbRestoreApplication.csproj", "{BF8FF3EB-5021-409B-B29E-3D7D9AAC74E4}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{AD560857-66F4-4F96-8AB9-CA580AE69464}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{AD560857-66F4-4F96-8AB9-CA580AE69464}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{AD560857-66F4-4F96-8AB9-CA580AE69464}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BF8FF3EB-5021-409B-B29E-3D7D9AAC74E4}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BF8FF3EB-5021-409B-B29E-3D7D9AAC74E4}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BF8FF3EB-5021-409B-B29E-3D7D9AAC74E4}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BF8FF3EB-5021-409B-B29E-3D7D9AAC74E4}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
